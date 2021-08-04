@@ -1,0 +1,19 @@
+{
+  "name": "@cryptoware.me/defibootcamp",
+  "version": "1.0.0",
+  "description": "DeFi Bootcamp codebase",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "rm -r -f build && truffle test",
+    "launch-devnet": "ganache-cli -a 10 -e 1000 --acctKeys devnetAccs.json",
+    "deploy-devnet": "rm -r -f build && truffle migrate --reset"
+  },
+  "author": "Jad A. Jabbour @ Cryptoware ME",
+  "license": "GPL3",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.2.0"
+  }
+}

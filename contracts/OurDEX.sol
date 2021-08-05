@@ -116,7 +116,7 @@ contract OurDEX is OurDEXToken {
     /** INIT */
 
     /**
-     * On deployment, OurDEX contract requires the address of the OURTToken contract deployed on the same chain
+     * On deployment, OurDEX contract requires the address of the OURToken contract deployed on the same chain
      * When testing, this proved a bit of a hassle since the OURTToken contract is in a different project.
      * What's even more problematic is using the ABI that means we'd have to build the other project then
      * copy paste the ABI file in this project, therefore, as a solution for testing, I copied the OURTToken contract
@@ -125,8 +125,8 @@ contract OurDEX is OurDEXToken {
      * and then use both address to initialize the arbitrage contract as it requires both to interact with.
     */
 
-    constructor(address _token, uint fee) OurDEXToken("OurDEXToken", "OURX"){
-        OURTToken = _token;
+    constructor(address _token, uint fee) OurDEXToken("OurDEX", "OURX", _msgSender()){
+        ourToken = _token;
         feeFactor = fee;
         MINIMUM_LIQUIDITY = 10**3*10**18;
         MAXIMUM_LIQUIDITY = 10**32*10**18;
@@ -275,7 +275,7 @@ contract OurDEX is OurDEXToken {
         (uint _reserveETH, uint _reserveOURT, ) = getReserves();
         // getting balances for token and ETH
         uint balanceETH = address(this).balance;
-        uint balanceOURT = IERC20Upgradeable(ourToken).balanceOf(address(this));
+        uint balanceOURT = IERC20(ourToken).balanceOf(address(this));
         // total OURX supply
         uint _totalSupply = totalSupply();
         // get liquidity bounds
@@ -373,12 +373,12 @@ contract OurDEX is OurDEXToken {
     // Calculates the amount of OURX to be minted given parameters
     function _calculateOURXMintable(uint totalSupply, uint reqETH, uint resvETH, uint reqOURT, uint resvOURT)
         private pure returns (uint mintable){
-        mintable = MathUpgradeable.min(uint(reqETH).mul(totalSupply) / resvETH, uint(reqOURT).mul(totalSupply) / resvOURT);
+        mintable = Math.min(uint(reqETH).mul(totalSupply) / resvETH, uint(reqOURT).mul(totalSupply) / resvOURT);
     }
 
     // transfers OURT token from OurDEX to supplied address
     function _safeTransferOURT(address to, uint value) private {
-        bool success = IERC20Upgradeable(ourToken).transfer(to, value);
+        bool success = IERC20(ourToken).transfer(to, value);
         require(success, 'OurDEX: OURT_TRANSFER_FAILED');
     }
 
@@ -390,7 +390,7 @@ contract OurDEX is OurDEXToken {
 
     // transfers OURT token from supplied address to supplied address
     function _safeTransferFromOURT(address from, address to, uint value) private {
-        bool success = IERC20Upgradeable(OURTToken).transferFrom(from, to, value);
+        bool success = IERC20(ourToken).transferFrom(from, to, value);
         require(success, 'OurDEX: OURT_TRANSFER_FAILED');
     }
 
@@ -431,7 +431,7 @@ contract OurDEX is OurDEXToken {
 
         uint balanceETH = address(this).balance; // getting contract's ETH balance representing new ETH pool
         // getting contract's OURT balance representing new OURT pool from OURTToken contract
-        uint balanceOURT = IERC20Upgradeable(OURTToken).balanceOf(address(this));
+        uint balanceOURT = IERC20(ourToken).balanceOf(address(this));
         uint amountETH = balanceETH.sub(_reserveETH); // ETH amount just received by OurDEX
         uint amountOURT = balanceOURT.sub(_reserveOURT); // OURT amount just received by OurDEX
 
@@ -502,7 +502,7 @@ contract OurDEX is OurDEXToken {
         _safeTransferOURT(to, amountOURT);
 
         // update balances and reserves
-        _update(address(this).balance, IERC20Upgradeable(OURTToken).balanceOf(address(this)), _reserveETH, _reserveOURT);
+        _update(address(this).balance, IERC20(ourToken).balanceOf(address(this)), _reserveETH, _reserveOURT);
 
         // Update liquidity records
         _updateLiquidityRecords(to, amountETH, amountOURT, false);
@@ -528,7 +528,7 @@ contract OurDEX is OurDEXToken {
         */
 
         // check to address validity
-        require(to != OURTToken, 'OurDEX: INVALID_TO');
+        require(to != ourToken, 'OurDEX: INVALID_TO');
 
         // trigger the appropriate transfer function when value of out > 0
         if (outETH > 0) _safeTransferETH(payable(to), outETH); // optimistically transfer ETH
@@ -536,7 +536,7 @@ contract OurDEX is OurDEXToken {
 
         // get new balances
         balanceETH = address(this).balance;
-        balanceOURT = IERC20Upgradeable(OURTToken).balanceOf(address(this));
+        balanceOURT = IERC20(ourToken).balanceOf(address(this));
 
         // This is a redundant check as the input sufficiency should already be checked in the function calling this one
         uint amountETHIn = balanceETH > _reserveETH - outETH ? balanceETH - (_reserveETH - outETH) : 0;
@@ -560,8 +560,8 @@ contract OurDEX is OurDEXToken {
         _update(balanceETH, balanceOURT, _reserveETH, _reserveOURT);
 
         // create swap reports for event
-        swapReport memory _in = swapReport(outETH > 0 ? OURTToken : address(0), outETH > 0 ? amountOURTIn : amountETHIn);
-        swapReport memory _out = swapReport(outETH > 0 ?  address(0) : OURTToken, outETH > 0 ? outETH : outOURT);
+        swapReport memory _in = swapReport(outETH > 0 ? ourToken : address(0), outETH > 0 ? amountOURTIn : amountETHIn);
+        swapReport memory _out = swapReport(outETH > 0 ?  address(0) : ourToken, outETH > 0 ? outETH : outOURT);
 
         emit Swap(msg.sender, _in, _out, to);
     }

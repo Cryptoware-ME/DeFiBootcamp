@@ -34,6 +34,9 @@ contract OurFund is OurFundToken
     
     // The address of the ERC20 token that this fund is holding in reserves
     address private token;
+    
+    // dex to trade on
+    address private dex;
 
     // a mapping of addresses to amount of elligible tokens for ETH redemption
     mapping (address => uint) private elligbleTokens;
@@ -76,13 +79,14 @@ contract OurFund is OurFundToken
 
     /** INIT */
 
-    constructor(address _token, address _bot, address _governance) OurFundToken('OurFund', 'OURF', _governance) {
+    constructor(address _dex, address _token, address _bot, address _governance) OurFundToken('OurFund', 'OURF', _governance) {
         token = _token;
         BOT_PARAMS = "";
         totalElligbleTokens = 0;
         reserveToken = 0;       
         reserveETH = 0;
         unlocked = 1;
+        dex = _dex;
         _setupRole(BOT_ROLE, _bot);
     }
     
@@ -372,7 +376,7 @@ contract OurFund is OurFundToken
 
     // update reserves and, on the first call per block, pushes to price history
     function _updateTokenReserves(uint balance) private {
-        require(balance <= type(uint).max && balance <= type(uint).max, 'OurFund: OVERFLOW'); // check for potential UINT overflow
+        require(balance <= type(uint).max, 'OurFund: OVERFLOW'); // check for potential UINT overflow
         uint32 blockTimestamp = uint32(block.timestamp % 2**32); // getting current block timestamp and casting to proper format
         reserveToken = uint(balance); // update OURT reserves
         blockTimestampLast = blockTimestamp;
@@ -381,7 +385,7 @@ contract OurFund is OurFundToken
 
     // update reserves and, on the first call per block, pushes to price history
     function _updateETHReserves(uint balance) private {
-        require(balance <= type(uint).max && balance <= type(uint).max, 'OurFund: OVERFLOW'); // check for potential UINT overflow
+        require(balance <= type(uint).max, 'OurFund: OVERFLOW'); // check for potential UINT overflow
         uint32 blockTimestamp = uint32(block.timestamp % 2**32); // getting current block timestamp and casting to proper format
         reserveETH = uint(balance); // update ETH reserves
         blockTimestampLast = blockTimestamp;
